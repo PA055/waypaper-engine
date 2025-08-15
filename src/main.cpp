@@ -1,7 +1,7 @@
 #include <memory>
 #include "Engine.hpp"
 
-int main(int argc, char** argv, char** envp) {
+int main() {
     using namespace WaypaperEngine;
     auto engine = std::make_unique<Engine>();
 }

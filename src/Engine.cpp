@@ -14,7 +14,7 @@ Engine::Engine() {
         exit(1);
     }
 
-    printf("idk it connected ig idrk what to do with this tho");
+    printf("idk it connected ig idrk what to do with this tho\n");
 }
 
 Engine::~Engine() {
