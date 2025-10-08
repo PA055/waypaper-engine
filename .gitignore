@@ -62,3 +62,8 @@ CMakeUserPresets.json
 
 build/
 .cache/
+
+
+# Added by cargo
+
+/target
