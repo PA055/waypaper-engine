@@ -1,16 +1,9 @@
 mod wayland;
 
 use anyhow::{Context, Result};
-use image::GenericImageView;
-use log::{error, info};
 use memmap2::MmapMut;
 use std::{env, fmt::format, path::PathBuf, sync::Arc, time::Duration};
 use waybackend::{Global, objman, types::ObjectId};
-
-struct EngineBackend {
-    backend: waybackend::Waybackend,
-    objman: objman::ObjectManager<WaylandObject>,
-}
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum WaylandObject {
@@ -29,6 +22,82 @@ enum WaylandObject {
     LayerSurface,
 }
 
+struct EngineBackend {
+    backend: waybackend::Waybackend,
+    objman: objman::ObjectManager<WaylandObject>,
+    registry: ObjectId,
+    compositor: ObjectId,
+    shm: ObjectId,
+    layer_shell: ObjectId,
+
+    monitors: Vec<Output>,
+
+    image: image::DynamicImage,
+}
+
+impl EngineBackend {
+    fn new(
+        backend: waybackend::Waybackend,
+        objman: objman::ObjectManager<WaylandObject>,
+        image: image::DynamicImage,
+    ) -> Self {
+        let registry = objman
+            .get_first(WaylandObject::Registry)
+            .expect("Missing wayland registry.");
+        let compositor = objman
+            .get_first(WaylandObject::Compositor)
+            .expect("Missing wayland compositor.");
+        let shm = objman
+            .get_first(WaylandObject::Shm)
+            .expect("Missing wayland shm.");
+        let layer_shell = objman
+            .get_first(WaylandObject::LayerShell)
+            .expect("Cannot run without zwlr_layer_shell support.");
+
+        let monitors: Vec<Output> = objman
+            .get_all(WaylandObject::Output)
+            .map(|output| Output::new(output))
+            .collect();
+
+        if monitors.is_empty() {
+            panic!("No displays available.");
+        }
+
+        println!("{:#?}", monitors);
+
+        Self {
+            backend,
+            objman,
+            registry,
+            compositor,
+            shm,
+            layer_shell,
+            monitors,
+            image,
+        }
+    }
+}
+
+#[derive(Debug)]
+struct Output {
+    pub name: Option<String>,
+    pub desc: Option<String>,
+
+    pub output: ObjectId,
+    pub output_name: u32,
+}
+
+impl Output {
+    fn new(output: ObjectId) -> Self {
+        Self {
+            name: None,
+            desc: None,
+            output,
+            output_name: output.get().into(), // I have no idea if this works or not :skull:
+        }
+    }
+}
+
 fn main() -> Result<()> {
     let image_path: PathBuf = PathBuf::from(
         env::args()
@@ -38,8 +107,6 @@ fn main() -> Result<()> {
 
     let img = image::open(&image_path)
         .with_context(|| format!("Failed to open image at {}", image_path.display()))?;
-
-    let (img, (img_w, img_h)) = (img.to_rgba8(), img.dimensions());
 
     let (mut backend, mut objman, mut reciever) = waybackend::connect(WaylandObject::Display)
         .with_context(|| "Could not connect to wayland server.")?;
@@ -66,15 +133,9 @@ fn main() -> Result<()> {
             (zwlr_layer_shell_v1, LayerShell),
             (wl_output, Output)
         );
-
-        println!(
-            "{:#?}",
-            globals
-                .iter()
-                .filter(|global| global.interface() == wl_output::NAME)
-                .collect::<Vec<&Global>>()
-        );
     };
+
+    let mut engine = EngineBackend::new(backend, objman, img);
 
     Ok(())
 }

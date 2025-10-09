@@ -4,13 +4,13 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-anyhow = "1.0.100"
-image = "0.25.8"
-log = "0.4.28"
-memmap2 = "0.9.8"
 waybackend = "0.6.2"
 wayland-client = "0.31.11"
 wayland-protocols = "0.32.9"
+image = "0.25.8"
+log = "0.4.28"
+memmap2 = "0.9.8"
+anyhow = "1.0.100"
 
 [build-dependencies]
 waybackend-scanner = {version = "0.6", features = ["build-script"]}
