@@ -11,6 +11,7 @@ image = "0.25.8"
 log = "0.4.28"
 memmap2 = "0.9.8"
 anyhow = "1.0.100"
+tempfile = "3.23.0"
 
 [build-dependencies]
 waybackend-scanner = {version = "0.6", features = ["build-script"]}
