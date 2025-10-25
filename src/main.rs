@@ -2,10 +2,9 @@ mod wayland;
 
 use crate::wayland::wlr::{
     layer_shell::{zwlr_layer_shell_v1, zwlr_layer_surface_v1},
-    output_management::{self, zwlr_output_head_v1, zwlr_output_manager_v1},
 };
 use wayland_client::protocol::{
-    wl_buffer, wl_callback, wl_compositor, wl_display, wl_output, wl_region, wl_registry, wl_shm,
+    wl_buffer, wl_compositor, wl_output, wl_region, wl_registry, wl_shm,
     wl_shm_pool, wl_surface,
 };
 use wayland_protocols::wp::viewporter::client::{wp_viewport, wp_viewporter};
@@ -13,7 +12,7 @@ use wayland_protocols::wp::viewporter::client::{wp_viewport, wp_viewporter};
 use anyhow::Result;
 use image::DynamicImage;
 use memmap2::MmapMut;
-use std::{env, io::Write, os::fd::AsFd, path::PathBuf};
+use std::{env, os::fd::AsFd, path::PathBuf};
 use tempfile::tempfile;
 use wayland_client::{
     Connection, Dispatch, Proxy, QueueHandle,
@@ -115,18 +114,11 @@ impl Dispatch<wl_shm::WlShm, ()> for State {
     fn event(
         _state: &mut Self,
         _proxy: &wl_shm::WlShm,
-        event: <wl_shm::WlShm as wayland_client::Proxy>::Event,
+        _event: <wl_shm::WlShm as wayland_client::Proxy>::Event,
         _data: &(),
         _conn: &Connection,
         _qhandle: &QueueHandle<Self>,
-    ) {
-        match event {
-            wl_shm::Event::Format { format } => {
-                println!("wl_shm: format {:?} available", format)
-            }
-            _ => (),
-        }
-    }
+    ) {}
 }
 
 impl Dispatch<wp_viewporter::WpViewporter, ()> for State {
@@ -289,14 +281,6 @@ impl Dispatch<wl_output::WlOutput, ()> for State {
                     .position(|o| o.output.id() == proxy.id())
                 {
                     let monitor = state.outputs.remove(i);
-                    println!(
-                        "Monitor {} sent Done with (x: {:?}, y: {:?}, name: {:?}, desc: {:?})",
-                        monitor.output.id(),
-                        monitor.x,
-                        monitor.y,
-                        monitor.name,
-                        monitor.desc
-                    );
                     let display = Display::new(state, monitor, qhandle);
                     state.displays.push(display);
                 }
@@ -330,23 +314,22 @@ impl OutputInfo {
 }
 
 struct Display {
-    pub name: Option<String>,
-    pub desc: Option<String>,
-    pub output: wl_output::WlOutput,
+    pub _name: Option<String>,
+    pub _desc: Option<String>,
+    pub _output: wl_output::WlOutput,
     pub output_name: u32,
 
-    x: i32,
-    y: i32,
+    _x: i32,
+    _y: i32,
     width: u32,
     height: u32,
 
     wl_surface: wl_surface::WlSurface,
-    viewport: wp_viewport::WpViewport,
+    _viewport: wp_viewport::WpViewport,
     layer_surface: zwlr_layer_surface_v1::ZwlrLayerSurfaceV1,
 
     ack_serial: u32,
     needs_ack: bool,
-    pub configured: bool,
 
     dirty: bool,
     image: DynamicImage,
@@ -401,28 +384,20 @@ impl Display {
 
         wl_surface.commit();
 
-        println!(
-            "created display - name: {}, surface: {}, layer surface: {}",
-            output.id(),
-            wl_surface.id(),
-            layer_surface.id()
-        );
-
         Self {
-            name,
-            desc,
-            output,
+            _name: name,
+            _desc: desc,
+            _output: output,
             output_name,
-            x: x.unwrap_or(0),
-            y: y.unwrap_or(0),
+            _x: x.unwrap_or(0),
+            _y: y.unwrap_or(0),
             width: w,
             height: h,
             wl_surface,
-            viewport,
+            _viewport: viewport,
             layer_surface,
             ack_serial: 0,
             needs_ack: false,
-            configured: false,
             dirty: false,
             image: DynamicImage::new(w, h, image::ColorType::Rgba8),
         }
@@ -451,16 +426,15 @@ impl Display {
             let b = chunk[2];
             let a = 255u8;
 
+            // Push into vector in least-endian order
             pixels.push(b);
             pixels.push(g);
             pixels.push(r);
             pixels.push(a);
         }
 
-        let mut tmpfile = tempfile().expect("Failed to create tempfile for shm");
+        let tmpfile = tempfile().expect("Failed to create tempfile for shm");
         tmpfile.set_len(size as u64).ok();
-        tmpfile.write_all(&pixels).expect("write failed");
-        // tempfile.write_all(&vec![0u8; 0]).ok();
 
         let mut mmap = unsafe { MmapMut::map_mut(&tmpfile).expect("mmap failed lmao") };
         mmap[..size].copy_from_slice(&pixels);
@@ -478,17 +452,13 @@ impl Display {
         );
         shm_pool.destroy();
 
-        println!(
-            "create_and_damage_buffer: attaching buffer {}x{} id={}",
-            self.width,
-            self.height,
-            buffer.id()
-        );
-
         self.wl_surface.attach(Some(&buffer), 0, 0);
         self.wl_surface.damage(0, 0, self.width as i32, self.height as i32);
         self.wl_surface.commit();
 
+        // I should properly store these, but for now I'm just forgetting
+        // it because I need to design a better way to store it, and so rust
+        // doesn't clean it up, and the server can display it
         std::mem::forget(mmap);
         std::mem::forget(tmpfile);
     }
