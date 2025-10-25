@@ -4,14 +4,13 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-waybackend = "0.6.2"
-wayland-client = "0.31.11"
-wayland-protocols = "0.32.9"
+anyhow = "1.0.100"
+bitflags = "2.10.0" # umm idk why but wlr_layer_shell needs this
 image = "0.25.8"
 log = "0.4.28"
 memmap2 = "0.9.8"
-anyhow = "1.0.100"
 tempfile = "3.23.0"
-
-[build-dependencies]
-waybackend-scanner = {version = "0.6", features = ["build-script"]}
+wayland-backend = "0.3.11"
+wayland-client = "0.31.11"
+wayland-protocols = {version = "0.32.9", features = ["client", "staging"]}
+wayland-scanner = "0.31.7"

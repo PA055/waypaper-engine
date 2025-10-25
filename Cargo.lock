@@ -83,9 +83,9 @@ checksum = "1e4b40c7323adcfc0a41c4b88143ed58346ff65a288fc144329c5c45e05d70c6"
 
 [[package]]
 name = "bitflags"
-version = "2.9.4"
+version = "2.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2261d10cca569e4643e526d8dc2e62e433cc8aba21ab764233731f8d369bf394"
+checksum = "812e12b5285cc515a9c72a5c1d3b6d46a19dac5acfef5265968c166106e31dd3"
 
 [[package]]
 name = "bitstream-io"
@@ -708,15 +708,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "quick-xml"
-version = "0.38.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "42a232e7487fc2ef313d96dde7948e7a3c05101870d8985e4fd8d26aedd27b89"
-dependencies = [
- "memchr",
-]
-
-[[package]]
 name = "quote"
 version = "1.0.41"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1139,30 +1130,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "waybackend"
-version = "0.6.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5b6d8f2fd99ebe132232e5eb1c01babb1138b324db93d4da2f95bae9324a1e36"
-dependencies = [
- "bitflags",
- "log",
- "rustix",
-]
-
-[[package]]
-name = "waybackend-scanner"
-version = "0.6.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "71cbc42726e8a225d9ac093b1687c9fe6a518ccb96f89706895b8ec354b81e7f"
-dependencies = [
- "pkg-config",
- "proc-macro2",
- "quick-xml 0.38.3",
- "quote",
- "syn",
-]
-
-[[package]]
 name = "wayland-backend"
 version = "0.3.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1195,6 +1162,7 @@ checksum = "efa790ed75fbfd71283bd2521a1cfdc022aabcc28bdcff00851f9e4ae88d9901"
 dependencies = [
  "bitflags",
  "wayland-backend",
+ "wayland-client",
  "wayland-scanner",
 ]
 
@@ -1205,7 +1173,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "54cb1e9dc49da91950bdfd8b848c49330536d9d1fb03d4bfec8cae50caa50ae3"
 dependencies = [
  "proc-macro2",
- "quick-xml 0.37.5",
+ "quick-xml",
  "quote",
 ]
 
@@ -1223,14 +1191,15 @@ name = "waypaper-engine"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "bitflags",
  "image",
  "log",
  "memmap2",
  "tempfile",
- "waybackend",
- "waybackend-scanner",
+ "wayland-backend",
  "wayland-client",
  "wayland-protocols",
+ "wayland-scanner",
 ]
 
 [[package]]
