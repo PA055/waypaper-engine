@@ -325,7 +325,7 @@ struct Display {
     height: u32,
 
     wl_surface: wl_surface::WlSurface,
-    _viewport: wp_viewport::WpViewport,
+    viewport: wp_viewport::WpViewport,
     layer_surface: zwlr_layer_surface_v1::ZwlrLayerSurfaceV1,
 
     ack_serial: u32,
@@ -394,7 +394,7 @@ impl Display {
             width: w,
             height: h,
             wl_surface,
-            _viewport: viewport,
+            viewport,
             layer_surface,
             ack_serial: 0,
             needs_ack: false,
@@ -409,15 +409,13 @@ impl Display {
         qh: &QueueHandle<State>,
         img: DynamicImage,
     ) {
-        self.image = img.resize_to_fill(
-            self.width,
-            self.height,
-            image::imageops::FilterType::CatmullRom,
-        );
+        self.image = img;
+        let width = self.image.width();
+        let height = self.image.height();
 
         let rgba = self.image.to_rgba8();
-        let stride = (4 * self.width) as i32;
-        let size = (stride as usize) * (self.height as usize);
+        let stride = (4 * width) as i32;
+        let size = (stride as usize) * (height as usize);
 
         let mut pixels: Vec<u8> = Vec::with_capacity(size);
         for chunk in rgba.chunks_exact(4) {
@@ -443,8 +441,8 @@ impl Display {
         let shm_pool = shm.create_pool(tmpfile.as_fd(), size as i32, qh, ());
         let buffer = shm_pool.create_buffer(
             0,
-            self.width as i32,
-            self.height as i32,
+            width as i32,
+            height as i32,
             stride,
             wl_shm::Format::Argb8888,
             qh,
@@ -453,8 +451,12 @@ impl Display {
         shm_pool.destroy();
 
         self.wl_surface.attach(Some(&buffer), 0, 0);
+
+        self.viewport.set_destination(self.width as i32, self.height as i32);
+
         self.wl_surface.damage(0, 0, self.width as i32, self.height as i32);
         self.wl_surface.commit();
+
 
         // I should properly store these, but for now I'm just forgetting
         // it because I need to design a better way to store it, and so rust
